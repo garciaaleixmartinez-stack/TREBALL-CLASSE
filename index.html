@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruleta de les excuses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f5f7; --card:#ffffff; --text:#1d1d1f; --muted:#6e6e73; --line:rgba(0,0,0,.08);
+    --blue:#0071e3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Inter,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto;padding:56px 24px 72px}
+  header{text-align:center;margin-bottom:40px}
+  .eyebrow{font-size:14px;font-weight:600;color:var(--blue);letter-spacing:.02em;margin-bottom:10px}
+  h1{font-size:clamp(36px,6vw,64px);font-weight:800;letter-spacing:-.035em;line-height:1.02}
+  .sub{margin:16px auto 0;max-width:620px;font-size:clamp(16px,2vw,20px);color:var(--muted);line-height:1.45}
+
+  .stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center}
+  @media (max-width:880px){.stage{grid-template-columns:1fr}}
+
+  .wheel-box{position:relative;width:min(100%,500px);aspect-ratio:1;margin:0 auto}
+  .wheel-shadow{position:absolute;inset:0;border-radius:50%;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.25),0 0 0 10px #fff,0 0 0 11px var(--line)}
+  canvas#wheel{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;
+    transition:transform 5.2s cubic-bezier(.12,.75,.12,1)}
+  .pointer{position:absolute;left:50%;top:-18px;transform:translateX(-50%);width:40px;height:50px;z-index:3;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,.25))}
+  .hub{position:absolute;left:50%;top:50%;width:26%;aspect-ratio:1;transform:translate(-50%,-50%);
+    border-radius:50%;background:#fff;border:none;cursor:pointer;z-index:2;
+    box-shadow:0 10px 30px rgba(0,0,0,.18),inset 0 0 0 1px var(--line);
+    font-family:inherit;font-weight:700;font-size:clamp(17px,2.4vw,22px);line-height:1;color:var(--text);letter-spacing:-.01em;
+    transition:transform .2s ease, box-shadow .2s ease}
+  .hub:hover{transform:translate(-50%,-50%) scale(1.04)}
+  .hub:active{transform:translate(-50%,-50%) scale(.97)}
+  .hub:disabled{cursor:default;color:var(--muted)}
+  .hub small{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-top:6px;letter-spacing:0}
+
+  .panel{background:var(--card);border-radius:28px;padding:36px;min-height:420px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04),0 20px 50px -25px rgba(0,0,0,.18);
+    display:flex;flex-direction:column}
+  .empty{margin:auto;text-align:center;color:var(--muted)}
+  .empty .big{font-size:56px;margin-bottom:14px}
+  .empty p{font-size:17px;line-height:1.5}
+  .tag{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;
+    padding:7px 14px;border-radius:999px;color:#fff;align-self:flex-start}
+  .r-title{font-size:clamp(28px,3.4vw,40px);font-weight:800;letter-spacing:-.03em;margin:18px 0 22px;line-height:1.05}
+  .quote{font-size:clamp(19px,2.2vw,24px);font-weight:500;line-height:1.4;letter-spacing:-.01em;
+    padding-left:18px;border-left:4px solid currentColor}
+  .quote span{color:var(--text)}
+  .label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:28px 0 8px}
+  .task{font-size:17px;line-height:1.5;color:var(--text)}
+  .who{font-size:13px;color:var(--muted);margin-bottom:8px;font-weight:600}
+
+  .timer-row{margin-top:auto;padding-top:28px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .btn{appearance:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;font-size:15px;line-height:1;padding:13px 22px;border-radius:999px;
+    background:var(--blue);color:#fff;transition:background .2s,transform .15s}
+  .btn:hover{background:#0077ed}
+  .btn:active{transform:scale(.97)}
+  .btn.ghost{background:rgba(0,0,0,.06);color:var(--text)}
+  .btn.ghost:hover{background:rgba(0,0,0,.1)}
+  .clock{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;min-width:70px}
+  .clock.low{color:#ff3b30}
+  .bar{flex:1 1 120px;height:6px;border-radius:6px;background:rgba(0,0,0,.07);overflow:hidden}
+  .bar i{display:block;height:100%;width:100%;background:var(--blue);transition:width 1s linear}
+
+  .controls{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:44px 0 18px}
+  .switch{display:inline-flex;align-items:center;gap:10px;font-size:15px;font-weight:500;cursor:pointer;
+    background:#fff;padding:10px 16px 10px 10px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line)}
+  .switch input{appearance:none;width:44px;height:26px;border-radius:999px;background:#e5e5ea;position:relative;cursor:pointer;transition:background .2s}
+  .switch input::after{content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;
+    box-shadow:0 2px 4px rgba(0,0,0,.2);transition:transform .2s}
+  .switch input:checked{background:#34c759}
+  .switch input:checked::after{transform:translateX(18px)}
+
+  .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:22px}
+  .item{background:#fff;border-radius:18px;padding:16px 18px;display:flex;gap:12px;align-items:center;
+    box-shadow:inset 0 0 0 1px var(--line);transition:opacity .3s}
+  .item .dot{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px}
+  .item b{font-size:15px;font-weight:600;letter-spacing:-.01em}
+  .item.used{opacity:.4}
+  .item.used b{text-decoration:line-through}
+  .foot{text-align:center;color:var(--muted);font-size:13px;margin-top:36px}
+  .fade{animation:fade .45s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Fase 4 · Gestionar el rebuig</div>
+    <h1>Ruleta de les excuses</h1>
+    <p class="sub">Gira la ruleta, llegeix l'objecció en veu alta i proposa una resposta adequada a la situació.</p>
+  </header>
+
+  <section class="stage">
+    <div class="wheel-box">
+      <div class="wheel-shadow"></div>
+      <svg class="pointer" viewBox="0 0 40 50" aria-hidden="true">
+        <path d="M20 50 L4 16 A18 18 0 1 1 36 16 Z" fill="#1d1d1f"/>
+        <circle cx="20" cy="17" r="6" fill="#fff"/>
+      </svg>
+      <canvas id="wheel" width="1000" height="1000" aria-label="Ruleta amb 7 objeccions"></canvas>
+      <button class="hub" id="spin">Gira<small>o prem espai</small></button>
+    </div>
+
+    <div class="panel" id="panel" aria-live="polite">
+      <div class="empty">
+        <div class="big">🎯</div>
+        <p>Prem <b>Gira</b> per descobrir<br>la primera objecció.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="controls">
+    <label class="switch"><input type="checkbox" id="noRepeat" checked> No repetir objeccions</label>
+    <button class="btn ghost" id="reset">Reiniciar ronda</button>
+  </div>
+
+  <div class="list" id="list"></div>
+  <p class="foot">Equips d'Investigació Comercial · Microformació per a enquestadors</p>
+</div>
+
+<script>
+const DATA = [
+  {t:"Vaig amb pressa", q:"Perdoneu, però arribo tard a una cita.",
+   a:"Proposa una resposta que mostri comprensió i intenti oferir una alternativa sense pressionar.", c:"#0071e3"},
+  {t:"No m'interessa", q:"No m'interessa gens aquest tipus d'enquestes.",
+   a:"Respon explicant breument la importància de la seva opinió.", c:"#5e5ce6"},
+  {t:"No em fio", q:"Com sé que aquesta enquesta és fiable?",
+   a:"Explica qui sou i quin és l'objectiu de l'estudi per transmetre confiança.", c:"#af52de"},
+  {t:"Ja he fet una enquesta", q:"Ja m'han fet una enquesta abans i no en vull fer cap més.",
+   a:"Mostra comprensió i explica que aquesta enquesta té un objectiu propi, sense insistir.", c:"#ff2d55"},
+  {t:"No tinc ganes", q:"Avui no tinc ganes de contestar preguntes.",
+   a:"Respon amb educació i respecta la decisió de la persona.", c:"#ff9500"},
+  {t:"Quant de temps es triga?", q:"Quant de temps hauria de dedicar-hi? No vull estar-m'hi gaire estona.",
+   a:"Explica aproximadament la durada de l'enquesta i intenta animar-la a participar sense pressionar.", c:"#34c759"},
+  {t:"No tinc confiança", q:"No acostumo a donar informació personal pel carrer.",
+   a:"Explica que pot conèixer l'objectiu de l'enquesta i resoldre els seus dubtes abans de decidir.", c:"#00a2c7"}
+];
+const N = DATA.length, SEG = 2*Math.PI/N, SEGDEG = 360/N;
+const cv = document.getElementById('wheel'), ctx = cv.getContext('2d');
+const used = new Set();
+let rot = 0, spinning = false, timerId = null;
+
+function wrapText(text, maxW){
+  const words = text.split(' '); const lines=[]; let line='';
+  for(const w of words){
+    const test = line ? line+' '+w : w;
+    if(ctx.measureText(test).width > maxW && line){ lines.push(line); line=w; } else line=test;
+  }
+  lines.push(line); return lines;
+}
+
+function draw(){
+  const R = 500; ctx.clearRect(0,0,1000,1000);
+  for(let i=0;i<N;i++){
+    const a0 = -Math.PI/2 + i*SEG, a1 = a0+SEG;
+    ctx.beginPath(); ctx.moveTo(R,R); ctx.arc(R,R,R,a0,a1); ctx.closePath();
+    ctx.fillStyle = used.has(i) ? '#d2d2d7' : DATA[i].c; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.9)'; ctx.lineWidth=6; ctx.stroke();
+
+    ctx.save(); ctx.translate(R,R); ctx.rotate(a0+SEG/2);
+    ctx.fillStyle = used.has(i) ? '#8e8e93' : '#fff'; ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.font = '800 64px -apple-system,BlinkMacSystemFont,Inter,sans-serif';
+    ctx.fillText(String(i+1), R-36, 0);
+    ctx.font = '700 34px -apple-system,BlinkMacSystemFont,Inter,sans-serif';
+    const lines = wrapText(DATA[i].t, 230);
+    const lh = 38, start = -((lines.length-1)*lh)/2;
+    lines.forEach((l,k)=>ctx.fillText(l, R-120, start+k*lh));
+    ctx.restore();
+  }
+}
+
+function renderList(){
+  document.getElementById('list').innerHTML = DATA.map((d,i)=>
+    `<div class="item ${used.has(i)?'used':''}"><span class="dot" style="background:${d.c}">${i+1}</span><b>${d.t}</b></div>`).join('');
+}
+
+function showResult(i){
+  const d = DATA[i]; clearInterval(timerId);
+  document.getElementById('panel').innerHTML = `
+    <div class="fade" style="display:flex;flex-direction:column;height:100%">
+      <span class="tag" style="background:${d.c}">Objecció ${i+1} de ${N}</span>
+      <h2 class="r-title">«${d.t}»</h2>
+      <div class="who">Persona enquestada</div>
+      <p class="quote" style="color:${d.c}"><span>«${d.q}»</span></p>
+      <div class="label">El que ha de fer el participant</div>
+      <p class="task">${d.a}</p>
+      <div class="timer-row">
+        <button class="btn" id="tbtn">Temps de resposta · 30 s</button>
+        <span class="clock" id="clock">0:30</span>
+        <span class="bar"><i id="tbar"></i></span>
+      </div>
+    </div>`;
+  document.getElementById('tbtn').onclick = ()=>startTimer(30);
+}
+
+function startTimer(sec){
+  clearInterval(timerId);
+  let left = sec; const clock = document.getElementById('clock'), bar = document.getElementById('tbar');
+  const paint=()=>{ clock.textContent = `0:${String(left).padStart(2,'0')}`; clock.classList.toggle('low', left<=5);
+    bar.style.width = (left/sec*100)+'%'; };
+  paint();
+  timerId = setInterval(()=>{ left--; paint(); if(left<=0){ clearInterval(timerId); clock.textContent='Temps!'; } },1000);
+}
+
+function spin(){
+  if(spinning) return;
+  const noRep = document.getElementById('noRepeat').checked;
+  let pool = [...Array(N).keys()].filter(i=>!noRep || !used.has(i));
+  if(!pool.length){ used.clear(); draw(); renderList(); pool=[...Array(N).keys()]; }
+  const i = pool[Math.floor(Math.random()*pool.length)];
+  spinning = true; document.getElementById('spin').disabled = true;
+
+  const jitter = (Math.random()-.5)*SEGDEG*0.6;
+  const target = 360 - (i+0.5)*SEGDEG + jitter;          // angle final perquè el segment quedi sota l'agulla
+  const current = ((rot%360)+360)%360;
+  rot += 360*6 + ((target - current + 360) % 360);
+  cv.style.transform = `rotate(${rot}deg)`;
+
+  setTimeout(()=>{
+    used.add(i); draw(); renderList(); showResult(i);
+    spinning = false; document.getElementById('spin').disabled = false;
+  }, 5300);
+}
+
+document.getElementById('spin').onclick = spin;
+document.getElementById('reset').onclick = ()=>{ if(spinning) return; used.clear(); clearInterval(timerId); draw(); renderList();
+  document.getElementById('panel').innerHTML = `<div class="empty"><div class="big">🎯</div><p>Ronda reiniciada.<br>Prem <b>Gira</b> per començar.</p></div>`; };
+document.addEventListener('keydown', e=>{ if(e.code==='Space' && e.target.tagName!=='INPUT'){ e.preventDefault(); spin(); } });
+
+draw(); renderList();
+if(document.fonts) document.fonts.ready.then(draw);
+</script>
+</body>
+</html>
